@@ -1,7 +1,7 @@
 from riotwatcher import RiotWatcher
 from RiotJSONToCSV import *
 
-rw = RiotWatcher()
+rw = RiotWatcher('')
 
 def getSummonerByName(n):
 	return rw.get_summoner(name=n)
@@ -23,7 +23,7 @@ def getSummonerInfoByName():
 	return getSummonerLeagueEntryByIDs(ids)
 
 print('\n')
-print getSummonerInfoByName()
+print get_csv_data_from_user_info('tempName', getSummonerInfoByName())
 #get_csv_data_from_user_info()
 
 

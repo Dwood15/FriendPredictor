@@ -29,12 +29,16 @@ uInfoFile = 'userInfo.csv'
 def get_csv_data_from_user_info(userName, userInfo):
 	players = []
 	for uID in userInfo.keys():
-		values = {}
-		curr = userInfo[uID]
-		values['UserId'] = uID
-		values['Queue'] = curr['queue']
-		values['Division'] =curr['entries']['division']
-		values['PlayerName'] = userName
+		curr = userInfo[uID][0]
+#		print curr
+#		print('Queue: ' + curr['queue'])
+		
+		values = { 
+		'UserId' : uID,  
+		'PlayerName': userName 
+		'Queue' : curr['queue'],  
+		'Division' : curr['entries'][0]['division'], 
+		}
 		players.append(values)
 		
 	return players
