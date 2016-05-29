@@ -1,6 +1,6 @@
 from riotwatcher import RiotWatcher
 
-w = RiotWatcher('f9f71a4c-a2fd-4d5c-a3b9-92a7a573771a')
+w = RiotWatcher('')
 
 # check if we have API calls remaining
 print(w.can_make_request())
