@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 02, 2016 at 08:24 PM
+-- Generation Time: Jun 06, 2016 at 05:04 AM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -72,10 +72,18 @@ CREATE TABLE IF NOT EXISTS `tweet` (
 CREATE TABLE IF NOT EXISTS `twitter_entity` (
   `entity_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_name` varchar(30) NOT NULL,
-  `description` varchar(500) DEFAULT NULL,
+  `screen_name` varchar(30) DEFAULT NULL,
+  `description` varchar(1000) DEFAULT NULL,
   `ign` varchar(30) DEFAULT NULL,
+  `followers_count` int(11) DEFAULT NULL,
+  `friends_count` int(11) DEFAULT NULL,
+  `date_created` datetime NOT NULL,
+  `tweet_count` int(11) DEFAULT NULL,
+  `language` varchar(4) DEFAULT NULL,
+  `last_post` datetime DEFAULT NULL,
+  `twitter_id` bigint(20) NOT NULL,
   PRIMARY KEY (`entity_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=45 ;
 
 --
 -- Constraints for dumped tables
