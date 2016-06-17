@@ -14,7 +14,11 @@ def api_connect():
 
 
 def db_connect():
-    db = MySQLdb.connect("localhost", "root", "", "lol")
+    secret_file = "secret.json"
+    secret = open(secret_file, "r")
+    file_string = secret.read()
+    file_json = json.loads(file_string)
+    db = MySQLdb.connect("localhost", "root", file_json['root_db_password'] , "lol")
     return db
 
 
