@@ -21,8 +21,6 @@ class TwitterEntityFinder:
         return next(self.cursor_followers)
 
     def store_follower(self, follower, cursor):
-
-        print(follower)
         # Pull storage values out of follower object
         user_name = follower.name.encode('ascii', 'ignore')
         description = follower.description.encode('ascii', 'ignore')
@@ -71,12 +69,14 @@ class TwitterEntityFinder:
         f = open('ids.txt')
         line = f.readline()
         cursor = self.db.cursor()
+        count = 0
         while line:
             users = self.get_users(line)
             for user in users:
                 self.store_follower(user, cursor)
             line = f.readline()
-            print "Finished 100, waiting 5 seconds"
+            count = count + 100
+            print "Finished: ", count, ", waiting 5 seconds..."
             time.sleep(5)
 
         f.close()
