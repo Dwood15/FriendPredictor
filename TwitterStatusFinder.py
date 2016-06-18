@@ -53,12 +53,16 @@ class TwitterStatusFinder:
 			pass 
 		
 	def get_tweets(self):
+		if(self.currentUser is not None):
 			currentTweet = None
 			if(self.currentUser[1] is not None and self.currentUser[2] is not None):
 				print "We've stored this user's tweets before!"
 			
+			elif(self.currentUser[1] is None and self.currentUser[2] is None):
 				print "storing for new user!"
+				currentTweet = next(tweepy.Cursor(self.api.user_timeline, user_id=self.currentUser[0], count=1, trim_user=True, contributor_details=False).items(1))
 				
+			else:
 				print "WHOA, half-baked ids up in here! careful bessy."
 				print "Don't worry, we'll just overwrite them I guess."
 			
