@@ -12,11 +12,8 @@ print "Testing basic functions."
 #\033[91m is an ASCII color escape sequence for Windows terminal/cmd.
 
 api = tools.api_connect()
-tup = tools.db_connect()
+db = tools.db_connect()
 
-#separate the tuple
-db = tup[0]
-type = tup[1]	
 
 #get a cursor for executing stuffs
 dcur = db.cursor()
@@ -49,13 +46,13 @@ tweet = None
 #try getting some stuff from the Twitter API here:
 if(row is not None):
 	try:
-		tweet = next(tweepy.Cursor(api.user_timeline, user_id=row[0], count=1).items(1))
+		tweet = next(tweepy.Cursor(api.user_timeline, user_id=row[0], count=1, trim_user=True, contributor_details=False).items(1))
 		
 		if(tweet is not None):
 			print "Received tweet! here's the text: "
 			print tweet.text
 		else:
-			print "\033[91mDidn't get anything from the tweet query."
+			print "\03Didn't get anything from the tweet query."
 			
 	except tweepy.TweepError, e:
 		print "\033[91mHad an error with tweet. Not sure what to do."

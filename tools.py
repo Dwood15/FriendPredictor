@@ -32,6 +32,6 @@ def db_connect():
 	
 	#Intended to be temporary until I hear if mysqldb plays nice with mysql connect.
 	if(cnct == "msql"):
-		return (db, cnct)
+		return db
 	else:
 		return db
