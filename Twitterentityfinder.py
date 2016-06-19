@@ -67,14 +67,18 @@ class TwitterEntityFinder:
 
     def main_loop(self):
         f = open('ids.txt')
-        line = f.readline()
+        lines = f.readline()
         cursor = self.db.cursor()
         count = 0
-        while line:
-            users = self.get_users(line)
+        while(lines):
+            print i
+            if count < 1704200:
+                count = count + 100
+                continue
+            users = self.get_users(lines)
             for user in users:
                 self.store_follower(user, cursor)
-            line = f.readline()
+            lines = f.readline()
             count = count + 100
             print "Finished: ", count, ", waiting 5 seconds..."
             time.sleep(5)
@@ -84,5 +88,6 @@ class TwitterEntityFinder:
 
 
 a = TwitterEntityFinder()
+print "hello"
 a.main_loop()
 

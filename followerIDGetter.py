@@ -18,7 +18,7 @@ class FollowerIdGetter:
                 time.sleep(15 * 60)
 
     def main_loop(self):
-        id_file = open("idsfff.txt", "w")
+        id_file = open("ids.txt", "w")
         follower_ids = ''
         count = 0
         for page in self.limit_handled(self.pages):
