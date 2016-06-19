@@ -30,12 +30,12 @@ try:
 
 		print "It seems something was returned, id: " + str(row[0])
 	else:
-		print "\033[91mQuery: " + sql
-		print "\033[91mWas unable to return anything!"
+		print "Query: " + sql
+		print "Was unable to return anything!"
 	
 except MySQL.Error, e:
-	print "\033[91mError receiving from database!!!"
-	print "\033[91m" + e.args[0], e.args[1]
+	print "Error receiving from database!!!"
+	print e.args[0], e.args[1]
 	
 finally:
 	dcur.close()
