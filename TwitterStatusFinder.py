@@ -13,11 +13,11 @@ from mysql.connector import MySQLConnection, Error
 from retrying import retry
 
 class TwitterStatusFinder:
-	def __init__(self, loud=False):
+	def __init__(self, file, loud=False):
 		self.t0 = time.clock()
 		self.api = tools.api_connect()
-		#self.api.wait_on_rate_limit = True
-		
+		self.api.wait_on_rate_limit = True
+		self.file = file
 		self.loud = loud
 		
 		print str(self.update_clock()) + " for connecting to Twitter."
@@ -69,7 +69,9 @@ class TwitterStatusFinder:
 				if(currentTweet is not None):
 					print "Received tweets!"
 					upUser = False
+					
 					for tweet in currentTweet:
+						ctt0 = time.clock()
 						if(self.loud):
 							print tweet.text.encode('UTF-8', 'ignore')
 						if(self.store_tweet(tweet, userId, test)):
@@ -80,16 +82,19 @@ class TwitterStatusFinder:
 							elif (tweet.id < min_id or min_id is None):
 								min_id = tweet.id
 								upUser = True
-								
+						print time.clock() - ctt0	
 					if(upUser and test == False):
-						update_user = "UPDATE twitter_entity SET smallest_pulled_tweet_id = %s, highest_pulled_tweet_id = %s WHERE twitter_id = %s"
-						try:
-							self.inscur.execute(update_user, (min_id, max_id, userId))
-							self.db.commit()
-						except Error as e:
-							print e
-							self.db.rollback()
-					#time.sleep(1)
+						with open(self.file, "a") as tracking:
+							tracking.write("%s, %s, %s\n" % (userId, min_id, max_id))
+					
+					#	update_user = "UPDATE twitter_entity SET smallest_pulled_tweet_id = %s, highest_pulled_tweet_id = %s WHERE twitter_id = %s"
+					#	try:
+					#		self.inscur.execute(update_user, (min_id, max_id, userId))
+					#		self.db.commit()
+					#	except Error as e:
+					#		print e
+					#		self.db.rollback()
+					time.sleep(1)
 				
 				else:
 					print "Didn't get anything from tweets query!"
@@ -197,10 +202,11 @@ def build_script(bot, upper):
 
 base = 0
 range_status = 7
-tsf = TwitterStatusFinder()
-
 top = base + range_status
+with open("trackingfile.csv", "w") as tracking:
+	tracking.write("twitter_id, smallest_pulled_tweet_id, highest_pulled_tweet_id\n")
 
+tsf = TwitterStatusFinder("trackingfile.csv")
 while(base < 1500):
 	mt0 = time.clock()
 	top = base + range_status
@@ -210,4 +216,5 @@ while(base < 1500):
 	print "Took: ", time.clock() - mt0, " seconds to get all the tweets for base: ", base, " to: ", top
 	time.sleep(60 * 4)
 
+tracking.close()
 print "Finished Loop for tweets! base = "
