@@ -71,10 +71,13 @@ class TwitterEntityFinder:
         cursor = self.db.cursor()
         count = 0
         while(lines):
-            print i
-            if count < 1704200:
+            print count
+            if count < 1704100:
+                lines = f.readline()
                 count = count + 100
+                print "just read: ",  count
                 continue
+            print "now here"
             users = self.get_users(lines)
             for user in users:
                 self.store_follower(user, cursor)
@@ -88,6 +91,5 @@ class TwitterEntityFinder:
 
 
 a = TwitterEntityFinder()
-print "hello"
 a.main_loop()
 
