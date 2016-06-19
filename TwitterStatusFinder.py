@@ -94,13 +94,13 @@ class TwitterStatusFinder:
 								upUser = True
 						self.tweets_counted += 1 #count tweets even if they failed...
 						if(self.tweets_counted > 60):
-							if((time.clock() - ctt0) < 3):
-								if(loud):
+							if((time.clock() - ctt0) < 2):
+								if(self.loud):
 									print "Going too fast, slowing down!"
-								time.sleep(4.0 - time.clock() - ctt0)
+								time.sleep(2.25 - time.clock() - ctt0)
 							self.tweets_counted = 0
 							ctt0 = time.clock()
-						time.sleep(.075)
+						time.sleep(.025)
 					
 					self.cumulative = 0
 					if(upUser and test == False):
@@ -118,19 +118,17 @@ class TwitterStatusFinder:
 			print te.message
 			print "API code: ", te.api_code
 			if(hasattr(te.response, 'status_code') and te.response.status_code is not None):
-				print "\n\t ERROR code: ", te.response.status_code
+				print "\t ERROR code: ", te.response.status_code
 				stat_code = te.response.status_code
 				if(stat_code == 401):
-					#for property, value in vars(te.response).iteritems():
-					#	print property, ": ", value
-					print "\n\tUnable to pull a user's tweets! User_Id: " + str(user_Id[0])
+					print "\tUnable to pull a user's tweets! User_Id: " + str(user_Id[0])
 					remain = te.response.headers['x-rate-limit-remaining']
 					print "\t", remain, " remaining"
 					if (remain < 60):
-						time.sleep(30)
+						time.sleep(15)
 				elif(te.api_code == 88 or stat_code == 429 ):
-					print "\n\tSlow down! Too many requests! sleeping for %s seconds!" % (self.cumulative)
-					self.cumulative += 30
+					print "\tSlow down! Too many requests! sleeping for %s seconds!" % (self.cumulative)
+					self.cumulative += 15
 					time.sleep(self.cumulative)
 			else:
 				print "\n\tUnknown error... "
@@ -221,12 +219,12 @@ class TwitterStatusFinder:
 					
 				if(self.loud):
 					print "\tIt took: " + str(time.clock() - t0) + " to get a single user's tweets."
-				if((time.clock() - self.last_update) < 12):
-					print "too fast for new user, slowing down- waiting for: ", (14 - int(time.clock()-self.last_update))
-					time.sleep(14 - int(time.clock() - self.last_update))
+				if((time.clock() - self.last_update) < 8):
+					print "too fast for new user, slowing down- waiting for: ", (10 - int(time.clock()-self.last_update))
+					time.sleep(10.0 - (time.clock() - self.last_update))
 					self.last_update = time.clock()
 					
-				time.sleep(4)
+				time.sleep(2.5)
 			print "\n\tIt took: "+ str(time.clock() - startTime) + " to get all user's tweets."
 
 		except Error as e:
@@ -254,17 +252,23 @@ class TwitterStatusFinder:
 def entity_min_max_update_from_file(file_name):
 	#create a new connection  
 	try:
+		upDTime = time.clock()
 		tdb = tools.db_connect()
 		emmcurs = tdb.cursor()
 		with open(file_name, 'r') as csvfile:
 			reader = csv.reader(csvfile)
+			rcount = 0
 			for row in reader:
 				update_script = "UPDATE twitter_entity SET smallest_pulled_tweet_id = %s, " \
 					"highest_pulled_tweet_id = %s WHERE twitter_id = %s"
 				emmcurs.execute(update_script, (row[1], row[2], row[0]))
-
+				rcount += 1
 				tdb.commit()
+				if((rcount % 10) == 0):
+					print "Updated 10 rows."
 			emmcurs.close()
+		
+		print "Finished updating from file, it took: " + str(time.clock() - upDTime) + " seconds."
 	except Error as e:
 		print "user update for user: ", (user_id, min_tweet, max_tweet), " failed."
 		print "Message: ", e
