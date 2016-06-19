@@ -22,6 +22,7 @@ class TwitterStatusFinder:
 		self.db = tools.db_connect()
 		#cursors
 		self.selcur = self.db.cursor()
+		self.inscur = self.db.cursor()
 		self.tweets_counted = 0
 		self.last_update = time.clock()
 		self.cumulative = 0
@@ -93,7 +94,7 @@ class TwitterStatusFinder:
 								upUser = True
 						self.tweets_counted += 1 #count tweets even if they failed...
 						if(self.tweets_counted > 60):
-							if((time.clock() - ctt0) < 4):
+							if((time.clock() - ctt0) < 3):
 								if(loud):
 									print "Going too fast, slowing down!"
 								time.sleep(4.0 - time.clock() - ctt0)
