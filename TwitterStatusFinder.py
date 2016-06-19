@@ -67,11 +67,11 @@ class TwitterStatusFinder:
 					sys.exit(1)
 				
 				if(currentTweet is not None):
-					print "Received tweets!"
+					#print "Received tweets!"
 					upUser = False
 					
+					ctt0 = time.clock()
 					for tweet in currentTweet:
-						ctt0 = time.clock()
 						if(self.loud):
 							print tweet.text.encode('UTF-8', 'ignore')
 						if(self.store_tweet(tweet, userId, test)):
@@ -82,7 +82,7 @@ class TwitterStatusFinder:
 							elif (tweet.id < min_id or min_id is None):
 								min_id = tweet.id
 								upUser = True
-						print time.clock() - ctt0	
+					print time.clock() - ctt0, " seconds for tweet loop."	
 					if(upUser and test == False):
 						with open(self.file, "a") as tracking:
 							tracking.write("%s, %s, %s\n" % (userId, min_id, max_id))
@@ -160,15 +160,15 @@ class TwitterStatusFinder:
 		#I suppose this should be moved to some kind of main loop.
 			if(test):
 				print "Testing! Executing selection query."
-				ext_scr = " LIMIT 10000"
+				ext_scr = " LIMIT 1000"
 			else:
-				ext_scr = " ORDER BY tweet_count DESC;"
+				ext_scr = " ORDER BY tweet_count ASC;"
 				
 			
 			self.selcur.execute(selection_query + ext_scr)
 			startTime = time.clock()
 			last_user = None
-			for user in self.iter_users(self.selcur, 100):
+			for user in self.iter_users(self.selcur, 400):
 				if(last_user is not None):
 					if(user[0] == last_user):
 						print "\t******Repeating users, something wrong with iter_users******"
@@ -176,11 +176,11 @@ class TwitterStatusFinder:
 				else:
 					last_user = user[0]
 					
-				print "\n\n"	
+				print "\n"	
 				self.t0 = time.clock()
 				self.get_tweets(user, count=200, test=test)
-				print "\t\tIt took: " + str(time.clock() - self.t0) + " to get a single user's tweets."
-				time.sleep(2)
+				print "\tIt took: " + str(time.clock() - self.t0) + " to get a single user's tweets."
+				time.sleep(1)
 			print "\n\tIt took: "+ str(time.clock() - startTime) + " to get all user's tweets."
 			self.selcur.close()
 			self.inscur.close()
@@ -200,21 +200,24 @@ def build_script(bot, upper):
 	second_part = " AND tweet_count < " + str(upper)
 	return first_part + second_part
 
-base = 0
-range_status = 7
+#just some stuff so I can do groups of tweeters in series...
+base = 7
+range_status = 9
 top = base + range_status
 with open("trackingfile.csv", "w") as tracking:
 	tracking.write("twitter_id, smallest_pulled_tweet_id, highest_pulled_tweet_id\n")
 
 tsf = TwitterStatusFinder("trackingfile.csv")
 while(base < 1500):
+	print "Beginning main loop with base: ", base, " to range: ", top
+	time.sleep(30)
 	mt0 = time.clock()
-	top = base + range_status
 	tsf.main_loop(build_script(base, top))
-	base = base + range_status
-	range_status += int(range_status / 3)
 	print "Took: ", time.clock() - mt0, " seconds to get all the tweets for base: ", base, " to: ", top
-	time.sleep(60 * 4)
+	base = base + range_status
+	top = base + range_status
+	range_status += int(range_status / 3)
+	
 
 tracking.close()
 print "Finished Loop for tweets! base = "
