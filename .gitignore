@@ -112,3 +112,4 @@ $RECYCLE.BIN/
 # Pycharm
 .idea/
 secret.json
+trackingfile.csv
