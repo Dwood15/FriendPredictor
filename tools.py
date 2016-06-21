@@ -22,13 +22,14 @@ def db_connect():
 	if(file_json['uname'] =='dason'):
 		print "using MySQL, NOT MySQLdb"
 		import mysql.connector as connection
+		from mysql.connector import MySQLConnection, Error
 		cnct = "msql"
 	else:
 		print "using MySQLdb"
 		import MySQLdb as connection
 		cnct = "msqldb"
 		
-	db = connection.connect(host="159.118.221.28",port=3306,user=file_json['uname'],passwd=file_json['upwd'], db="lol")
+	db = connection.connect(host=file_json['host'],port=3306,user=file_json['uname'],passwd=file_json['upwd'], db="lol")
 	
 	#Intended to be temporary until I hear if mysqldb plays nice with mysql connect.
 	if(cnct == "msql"):

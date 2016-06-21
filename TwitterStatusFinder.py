@@ -8,9 +8,6 @@ import sys
 import inspect
 
 from retrying import retry
-from mysql.connector import MySQLConnection, Error
-
-from retrying import retry
 
 class TwitterStatusFinder:
 	def __init__(self, file, loud=False):
