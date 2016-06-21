@@ -113,3 +113,5 @@ $RECYCLE.BIN/
 .idea/
 secret.json
 trackingfile.csv
+trackingfile2.csv
+*.csv

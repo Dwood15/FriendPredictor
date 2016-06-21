@@ -55,10 +55,12 @@ if(row is not None):
 			print "\03Didn't get anything from the tweet query."
 			
 	except tweepy.TweepError, e:
-		print "\033[91mHad an error with tweet. Not sure what to do."
-		print e
+		print "Had an error with tweet. Not sure what to do."
+		for property, value in vars(e.response).iteritems():
+			print property, ": ", value
 		pass
-		
+		print e.response.headers['x-rate-limit-remaining']
+	
 	finally:	
 		pass
 		
