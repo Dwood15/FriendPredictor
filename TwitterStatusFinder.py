@@ -8,7 +8,8 @@ import sys
 import inspect
 import csv
 import thread
-from mysql.connector import MySQLConnection, Error
+import MySQLdb
+
 
 class TwitterStatusFinder:
     def __init__(self, file, loud=False):
@@ -141,7 +142,7 @@ class TwitterStatusFinder:
                     print "retrying the connection failed miserably."
                     sys.exit(1)
 
-        except Error as e:
+        except Exception as e:
             print "\n\tget_tweets error: ", e
 
         return None
@@ -178,7 +179,7 @@ class TwitterStatusFinder:
             try:
                 self.inscur.execute(insert_script, args)
                 self.db.commit()
-            except Error as e:
+            except Exception as e:
                 print e
                 self.db.rollback()
                 return False
@@ -221,14 +222,14 @@ class TwitterStatusFinder:
                     print "\tIt took: " + str(time.clock() - t0) + " to get a single user's tweets."
                 if ((time.clock() - self.last_update) < 8):
                     print "too fast for new user, slowing down- waiting for: ", (
-                    10 - int(time.clock() - self.last_update))
+                        10 - int(time.clock() - self.last_update))
                     time.sleep(10.0 - (time.clock() - self.last_update))
                     self.last_update = time.clock()
 
                 time.sleep(2.5)
             print "\n\tIt took: " + str(time.clock() - startTime) + " to get all user's tweets."
 
-        except Error as e:
+        except Exception as e:
             print "Error receiving from database!!!"
             print e
             sys.exit(1)
@@ -270,8 +271,7 @@ def entity_min_max_update_from_file(file_name):
             emmcurs.close()
 
         print "Finished updating from file, it took: " + str(time.clock() - upDTime) + " seconds."
-    except Error as e:
-        print "user update for user: ", (user_id, min_tweet, max_tweet), " failed."
+    except Exception as e:
         print "Message: ", e
         tdb.rollback()
 
@@ -312,7 +312,7 @@ version = 0
 while ((base - range_status) > 50):
     # parse the file!
     print "Creating a new user parsing table!"
-    thread.start_new_thread(entity_min_max_update_from_file, (str(tsf.csvfile),))
+    # thread.start_new_thread(entity_min_max_update_from_file, (str(tsf.csvfile),))
     version += 1
     tsf.new_csv_for_writing(version)
 
@@ -331,5 +331,4 @@ while ((base - range_status) > 50):
     range_status = range_status_update(top, range_status)
 
 tsf.close()
-tracking.close()
 print "Finished Loop for tweets! base = "
