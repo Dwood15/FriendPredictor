@@ -8,8 +8,8 @@ import sys
 import inspect
 import csv
 import thread
-
-from mysql.connector import MySQLConnection, Error
+from mysql.connector import Error
+import MySQLdb
 
 class TwitterStatusFinder:
 	def __init__(self, file, loud=False):
@@ -310,7 +310,7 @@ version = 0
 while((base - range_status) > 50):
 	#parse the file!
 	print "Creating a new user parsing table!"
-	thread.start_new_thread(entity_min_max_update_from_file, (str(tsf.csvfile),))
+	#thread.start_new_thread(entity_min_max_update_from_file, (str(tsf.csvfile),))
 	version += 1
 	tsf.new_csv_for_writing(version)
 	
