@@ -1,25 +1,27 @@
 import json
 import tweepy
+from riotwatcher import RiotWatcher
 
-
-# TODO: Add LOL_connect functions
-
-def api_connect():
+def get_json_secret():
     secret_file = "secret.json"
     secret = open(secret_file, "r")
     file_string = secret.read()
-    file_json = json.loads(file_string)
+    return json.loads(file_string)
+
+# TODO: Add LOL_connect functions
+def lol_connect():
+    file_json = get_json_secret()
+    return RiotWatcher(file_json['riot_key'])
+
+def api_connect():
+    file_json = get_json_secret()
     auth = tweepy.OAuthHandler(file_json['key'], file_json['secret'])  # AppAuth or OAuth?
     auth.set_access_token(file_json['token'], file_json['token_secret'])
     return tweepy.API(auth)
 
 
 def db_connect():
-    secret_file = "secret.json"
-    secret = open(secret_file, "r")
-    file_string = secret.read()
-    file_json = json.loads(file_string)
-
+    file_json = get_json_secret()
     # because mysqldb isn't playing nice.
     if (file_json['uname'] == 'dason'):
         print "using MySQL, NOT MySQLdb"

@@ -3,6 +3,9 @@ import re
 import MySQLdb
 
 
+def is_lol_player(name):
+
+
 def get_names(data):
     print data
     for bio in data:
@@ -22,7 +25,7 @@ def query_ign():
     db = tools.db_connect()
     cursor = db.cursor()
     try:
-        sql = r"SELECT description FROM twitter_entity WHERE description LIKE '% summoner name: %' OR description LIKE '% IGN: %' OR description LIKE '% in game name: %' OR description LIKE '% lol name: %' OR description LIKE '% league of legends username: %' OR description LIKE '% league of legends name: %' OR description LIKE '% IGN : %' OR description LIKE '% IG: %'"
+        sql = r"SELECT description FROM twitter_entity WHERE description LIKE '% summoner name: %' OR description LIKE '% IGN: %' OR description LIKE '% in game name: %' OR description LIKE '% lol name: %' OR description LIKE '% league of legends username: %' OR description LIKE '% league of legends name: %' OR description LIKE '% IGN : %' OR description LIKE '% Find me IG: %'"
         # sql = r"select SUBSTRING_INDEX(description,'ign:',1) from twitter_entity"
 
         print sql
