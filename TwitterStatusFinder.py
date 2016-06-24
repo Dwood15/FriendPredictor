@@ -8,6 +8,7 @@ import sys
 import inspect
 import csv
 import thread
+
 from mysql.connector import Error
 import MySQLdb
 
@@ -58,7 +59,7 @@ class TwitterStatusFinder:
 				min_id = user_Id[1]
 				max_id = user_Id[2]
 				currentTweet = None
-
+				tweets_since_message = 0
 				if(min_id is not None and max_id is not None):
 					if(self.loud):
 						print "We've stored this user's tweets before!"
@@ -80,7 +81,7 @@ class TwitterStatusFinder:
 					upUser = False
 					#need a tweetsPerMinute calculator...
 					#180 requests of up to 200 tweets per 15 minutes
-					#180 * 200 = 3600 per 15 minutes
+					#180 * 200 = 36000 per 15 minutes
 					
 					ctt0 = time.clock()
 					for tweet in currentTweet:
@@ -93,15 +94,19 @@ class TwitterStatusFinder:
 								min_id = tweet.id
 								upUser = True
 						self.tweets_counted += 1 #count tweets even if they failed...
+						tweets_since_message += 1
+						if(tweets_since_message > 180):
+							print "Still working on user: ", userId
+							tweets_since_message = 0
+							
 						if(self.tweets_counted > 60):
 							if((time.clock() - ctt0) < 2):
 								if(self.loud):
 									print "Going too fast, slowing down!"
-								time.sleep(2.25 - time.clock() - ctt0)
+								time.sleep(2.15 - (time.clock() - ctt0))
 							self.tweets_counted = 0
 							ctt0 = time.clock()
-						time.sleep(.025)
-					
+						time.sleep(.015)
 					self.cumulative = 0
 					if(upUser and test == False):
 						return (userId, min_id, max_id)
@@ -155,11 +160,12 @@ class TwitterStatusFinder:
 		reply_to_user = tweet.in_reply_to_user_id
 		if(self.loud):
 			print "Storing tweets"
-		insert_script = "INSERT IGNORE INTO tweets " \
+		insert_script = "INSERT INTO tweets " \
 						"(tweet_id, tweet_text, created_at," \
 						" twitter_id, retweet_count," \
 						" in_reply_to_status_id, in_reply_to_twitter_id )" \
-						" VALUES (%s, %s, %s, %s, %s, %s, %s)"
+						" VALUES (%s, %s, %s, %s, %s, %s, %s)" \
+						" ON DUPLICATE KEY UPDATE tweet_id = tweet_id"
 						
 		args = (tweet_id, text, date, user_id, rt_count, reply_to_tweet, reply_to_user)
 		
@@ -198,7 +204,7 @@ class TwitterStatusFinder:
 			self.selcur.execute(selection_query + ext_scr)
 			print "\tExecuted selection query."
 			
-			time.sleep(15)
+			time.sleep(5)
 			startTime = time.clock()
 			last_user = None
 			
@@ -215,16 +221,16 @@ class TwitterStatusFinder:
 				t0 = time.clock()
 				result = self.get_tweets(user, count=200, test=test)
 				if(result is not None):
-					self.save_to_csv(result)
+					thread.start_new_thread(entity_min_max_update, (result,))
 					
 				if(self.loud):
 					print "\tIt took: " + str(time.clock() - t0) + " to get a single user's tweets."
-				if((time.clock() - self.last_update) < 8):
-					print "too fast for new user, slowing down- waiting for: ", (10 - int(time.clock()-self.last_update))
-					time.sleep(10.0 - (time.clock() - self.last_update))
+				if((time.clock() - self.last_update) < 7.0):
+					print "too fast for new user, slowing down- waiting for: ", (8.0 - time.clock()-self.last_update)
+					time.sleep(8.0 - (time.clock() - self.last_update))
 					self.last_update = time.clock()
 					
-				time.sleep(2.5)
+				time.sleep(2.0)
 			print "\n\tIt took: "+ str(time.clock() - startTime) + " to get all user's tweets."
 
 		except Error as e:
@@ -238,39 +244,23 @@ class TwitterStatusFinder:
 	def close(self):
 		self.selcur.close()
 		self.inscur.close()
-		
-	def new_csv_for_writing(self, version):
-		self.csvfile = 'trackingfile' + str(version) + '.csv'
-		with open(self.csvfile, "w") as tracking:
-			tracking.write("twitter_id, smallest_pulled_tweet_id, highest_pulled_tweet_id\n")
 	
-	def save_to_csv(self, tweetresult):
-		with open(self.csvfile, "a") as tracking:
-			tracking.write("%s, %s, %s\n" % (tweetresult[0], tweetresult[1], tweetresult[2]))
-	
-		
-def entity_min_max_update_from_file(file_name):
+def entity_min_max_update(row):
 	#create a new connection  
 	try:
 		upDTime = time.clock()
 		tdb = tools.db_connect()
 		emmcurs = tdb.cursor()
-		with open(file_name, 'r') as csvfile:
-			reader = csv.reader(csvfile)
-			rcount = 0
-			for row in reader:
-				update_script = "UPDATE twitter_entity SET smallest_pulled_tweet_id = %s, " \
-					"highest_pulled_tweet_id = %s WHERE twitter_id = %s"
-				emmcurs.execute(update_script, (row[1], row[2], row[0]))
-				rcount += 1
-				tdb.commit()
-				if((rcount % 10) == 0):
-					print "Updated 10 rows."
-			emmcurs.close()
+		update_script = "UPDATE twitter_entity SET smallest_pulled_tweet_id = %s, " \
+				"highest_pulled_tweet_id = %s WHERE twitter_id = %s " \
+				" AND highest_pulled_tweet_id <= %s AND smallest_pulled_tweet_id >= %s"
+		emmcurs.execute(update_script, (row[1], row[2], row[0], row[1], row[2]))
+		tdb.commit()
+
+		emmcurs.close()
 		
-		print "Finished updating from file, it took: " + str(time.clock() - upDTime) + " seconds."
 	except Error as e:
-		print "user update for user: ", (user_id, min_tweet, max_tweet), " failed."
+		print "user update for user: ", (row[0], row[1], row[2]), " failed."
 		print "Message: ", e
 		tdb.rollback()
 
@@ -298,24 +288,20 @@ def range_status_update(top, range_status):
 	else:
 		range_status = 5
 	return range_status
-		
+
+
 range_status = 330
 top = 4000
 base = top - range_status
-
 tsf = TwitterStatusFinder('trackingfile.csv')
 
 version = 0 
 
 while((base - range_status) > 50):
 	#parse the file!
-	print "Creating a new user parsing table!"
-	#thread.start_new_thread(entity_min_max_update_from_file, (str(tsf.csvfile),))
-	version += 1
-	tsf.new_csv_for_writing(version)
 	
 	#sleep for about 15secs, try to let some resources free up for a bit...
-	time.sleep(15)
+	time.sleep(8)
 	
 	#actually execute the main loop
 	print "Beginning main loop with base: ", base, " to range: ", top
