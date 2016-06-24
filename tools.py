@@ -19,7 +19,7 @@ def db_connect():
 	file_json = json.loads(file_string)
 	
 	#because mysqldb isn't playing nice.
-	if(file_json['uname'] =='dason'):
+	if(file_json['piname'] =='dason'):
 		print "using MySQL, NOT MySQLdb"
 		import mysql.connector as connection
 		cnct = "msql"
@@ -28,7 +28,7 @@ def db_connect():
 		import MySQLdb as connection
 		cnct = "msqldb"
 		
-	db = connection.connect(host="159.118.221.28",port=3306,user=file_json['uname'],passwd=file_json['upwd'], db="lol")
+	db = connection.connect(host=file_json['localserver'],user=file_json['localuser'], db="lol", use_unicode=True,charset='utf8mb4',collation='utf8mb4_general_ci')
 	
 	#Intended to be temporary until I hear if mysqldb plays nice with mysql connect.
 	if(cnct == "msql"):
