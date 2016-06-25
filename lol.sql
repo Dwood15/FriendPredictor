@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 13, 2016 at 05:12 AM
+-- Generation Time: Jun 25, 2016 at 02:11 AM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -51,17 +51,34 @@ CREATE TABLE IF NOT EXISTS `following` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tweet`
+-- Table structure for table `lol_entity`
 --
 
-CREATE TABLE IF NOT EXISTS `tweet` (
-  `tweet_id` int(11) NOT NULL AUTO_INCREMENT,
-  `entity_id` int(11) NOT NULL,
+CREATE TABLE IF NOT EXISTS `lol_entity` (
+  `entity_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `summoner_name` varchar(140) NOT NULL,
+  `level` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
+  PRIMARY KEY (`entity_id`),
+  UNIQUE KEY `user_id` (`user_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=253 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tweets`
+--
+
+CREATE TABLE IF NOT EXISTS `tweets` (
+  `tweet_id` bigint(20) unsigned NOT NULL,
   `tweet_text` varchar(150) NOT NULL,
-  `date` date NOT NULL,
-  PRIMARY KEY (`tweet_id`),
-  KEY `fk_entity_id` (`entity_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+  `created_at` date NOT NULL,
+  `twitter_id` bigint(20) unsigned NOT NULL,
+  `retweet_count` int(10) unsigned NOT NULL DEFAULT '0',
+  `in_reply_to_status_id` bigint(20) unsigned DEFAULT NULL,
+  `in_reply_to_twitter_id` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`tweet_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -82,8 +99,24 @@ CREATE TABLE IF NOT EXISTS `twitter_entity` (
   `language` varchar(8) DEFAULT NULL,
   `last_post` datetime DEFAULT NULL,
   `twitter_id` bigint(20) NOT NULL,
+  `highest_pulled_tweet_id` bigint(20) DEFAULT NULL,
+  `smallest_pulled_tweet_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`entity_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=21292 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=731897 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `twitter_lol_resolution`
+--
+
+CREATE TABLE IF NOT EXISTS `twitter_lol_resolution` (
+  `resolution_id` int(11) NOT NULL AUTO_INCREMENT,
+  `twitter_entity_id` bigint(20) NOT NULL,
+  `lol_entity_id` bigint(20) NOT NULL,
+  `confidence_score` int(11) DEFAULT NULL,
+  PRIMARY KEY (`resolution_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=219 ;
 
 --
 -- Constraints for dumped tables
@@ -100,12 +133,6 @@ ALTER TABLE `follower`
 --
 ALTER TABLE `following`
   ADD CONSTRAINT `following_ibfk_1` FOREIGN KEY (`entity_id`) REFERENCES `twitter_entity` (`entity_id`);
-
---
--- Constraints for table `tweet`
---
-ALTER TABLE `tweet`
-  ADD CONSTRAINT `tweet_ibfk_1` FOREIGN KEY (`entity_id`) REFERENCES `twitter_entity` (`entity_id`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

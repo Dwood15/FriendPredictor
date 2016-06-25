@@ -8,7 +8,16 @@ def get_json_secret():
     file_string = secret.read()
     return json.loads(file_string)
 
-# TODO: Add LOL_connect functions
+def unicode_to_utf8(input):
+    if isinstance(input, dict):
+        return {unicode_to_utf8(key): unicode_to_utf8(value) for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [unicode_to_utf8(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
 def lol_connect():
     file_json = get_json_secret()
     return RiotWatcher(file_json['riot_key'])
