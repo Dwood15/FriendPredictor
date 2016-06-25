@@ -30,23 +30,42 @@ def api_connect():
 
 
 def db_connect():
-    file_json = get_json_secret()
+    # file_json = get_json_secret()
+    # # because mysqldb isn't playing nice.
+    # if (file_json['uname'] == 'dason'):
+    #     print "using MySQL, NOT MySQLdb"
+    #     import mysql.connector as connection
+    #     from mysql.connector import MySQLConnection, Error
+    #     cnct = "msql"
+    # else:
+    #     print "using MySQLdb"
+    #     import MySQLdb as connection
+    #     cnct = "msqldb"
+
+    # db = connection.connect(host=file_json['host'], port=3306, user=file_json['uname'], passwd=file_json['upwd'],
+    #                         db="lol")
+
+    # Intended to be temporary until I hear if mysqldb plays nice with mysql connect.
+    secret_file = "secret.json"
+    secret = open(secret_file, "r")
+    file_string = secret.read()
+    file_json = json.loads(file_string)
+
     # because mysqldb isn't playing nice.
-    if (file_json['uname'] == 'dason'):
+    if (file_json['piname'] == 'dason'):
         print "using MySQL, NOT MySQLdb"
         import mysql.connector as connection
-        from mysql.connector import MySQLConnection, Error
         cnct = "msql"
     else:
         print "using MySQLdb"
         import MySQLdb as connection
         cnct = "msqldb"
 
-    db = connection.connect(host=file_json['host'], port=3306, user=file_json['uname'], passwd=file_json['upwd'],
-                            db="lol")
-
-    # Intended to be temporary until I hear if mysqldb plays nice with mysql connect.
+    db = connection.connect(host=file_json['localserver'], user=file_json['localuser'], db="lol", use_unicode=True,
+                            charset='utf8mb4', collation='utf8mb4_general_ci')
     if (cnct == "msql"):
         return db
     else:
         return db
+
+
