@@ -36,7 +36,11 @@ def resolve(twitter_entity):
         if my_keyword:
 
             # Check for other possible game lables here
-            word_before = text_before.split(' ')[-2]
+            word_before = ''
+            try:
+                word_before = text_before.split(' ')[-2]
+            except IndexError:
+                print "Except IndexError, name has no text before"
             print "Text before -1", word_before
             if 'minecraft' in word_before or 'mc' in word_before or 'garnea' in word_before or 'xbox' in word_before or 'runescape' in word_before:
                 print "minecraft ign"
