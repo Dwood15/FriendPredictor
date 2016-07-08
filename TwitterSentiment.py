@@ -100,10 +100,11 @@ class TwitterSentimentAnalyzer:
 				
 				self.current_tweet_count += 1
 				if(self.current_tweet_count % 50000 == 0):
-					thread.start_new_thread(update_tweets, (deepcopy(tweet_list), self.loud))
-					time.sleep(2)
+					update_tweets(deepcopy(tweet_list), self.loud)
+					#thread.start_new_thread(update_tweets, (deepcopy(tweet_list), self.loud))
+					time.sleep(3)
 					tweet_list = []
-					time.sleep(.5)
+				#time.sleep(.0005)
 			print "\n\tIt took: "+ str((time.clock() - startTime) / 60) + " minutes to get all tweets."
 
 		except Error as e:
