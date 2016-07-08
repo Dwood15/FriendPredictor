@@ -61,8 +61,7 @@ def db_connect():
         import MySQLdb as connection
         cnct = "msqldb"
 
-    db = connection.connect(host=file_json['localserver'], user=file_json['localuser'], db="lol", use_unicode=True,
-                            charset='utf8mb4', collation='utf8mb4_general_ci')
+    db = connection.connect(host=file_json['host'], user=file_json['uname'], db="lol")
     if (cnct == "msql"):
         return db
     else:
