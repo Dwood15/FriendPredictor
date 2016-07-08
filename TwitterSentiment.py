@@ -45,7 +45,6 @@ class TweetSentiment:
 		 self.vaderPos, self.vaderNeu, self.vaderNeg,
 		 'NULL', 'NULL', 'NULL',
 		 'NULL', 'NULL', 'NULL')
-		
 
 		query = part_one
 		if(loud):
@@ -61,7 +60,6 @@ class TwitterSentimentAnalyzer:
 		self.db = tools.db_connect()
 		#Fire up three cursors - these should allow for threading.
 		self.selcur = self.db.cursor()  #for selecting users
-		self.inscur = self.db.cursor()  #inserting the analysis
 		
 		
 		self.last_update = time.clock()
@@ -92,21 +90,18 @@ class TwitterSentimentAnalyzer:
 			self.current_tweet_count = 0
 			tweet_list = []
 			
-			for tweet in self.iter_cursor(self.selcur, 5000):
+			for tweet in self.iter_cursor(self.selcur, 3000):
 				self.last_update = time.clock()
 				
 				t0 = time.clock()
 				tweet_list.append(TweetSentiment(tweet[0], tweet[1]))
 				
 				self.current_tweet_count += 1
-				if(self.current_tweet_count % 50000 == 0):
-					update_tweets(deepcopy(tweet_list), self.loud)
-					#thread.start_new_thread(update_tweets, (deepcopy(tweet_list), self.loud))
-					time.sleep(3)
-					tweet_list = []
 				#time.sleep(.0005)
 			print "\n\tIt took: "+ str((time.clock() - startTime) / 60) + " minutes to get all tweets."
-
+			
+			update_tweets(tweet_list, self.loud)
+			
 		except Error as e:
 			print "Error receiving from database!!!"
 			print e
@@ -117,7 +112,7 @@ class TwitterSentimentAnalyzer:
 	
 	def close(self):
 		self.selcur.close()
-		self.inscur.close()
+
 		
 '''Store the analyzed tweet information in the database'''
 def analyze_tweet(tweet, sid, loud=False):
@@ -140,16 +135,19 @@ def update_tweets(tweets,loud=False):
 		upDTime = time.clock()
 		tdb = tools.db_connect()
 		emmcurs = tdb.cursor()
+		count = 0
 		for tweet in tweets:
 			analyze_tweet(tweet, SentimentIntensityAnalyzer())
 			update_script = tweet.get_query(loud)
 			emmcurs.execute(update_script)
 			currentTweet = tweet.id
-		
+			count += 1
+			if(count % 500):
+				tdb.commit()
+				count = 0
 		tdb.commit()
-
 		emmcurs.close()
-		print "Updated tweet analysis stuff" 
+		#print "Updated tweet analysis stuff" 
 		
 	except Error as e:
 		print "Updating tweets: ", (currentTweet), " failed."
