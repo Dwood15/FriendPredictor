@@ -9,8 +9,8 @@ import inspect
 import csv
 import thread
 
-from mysql.connector import Error
-import MySQLdb
+from mysql.connector import MySQLConnection, Error
+#import MySQLdb
 
 
 class TwitterStatusFinder:
@@ -197,12 +197,11 @@ class TwitterStatusFinder:
 		#I suppose this should be moved to some kind of main loop.
 			if(test):
 				print "Testing! Executing selection query."
-				ext_scr = " LIMIT 1000"
-			else:
-				ext_scr = " ORDER BY tweet_count ASC;"
+				selection_query += " LIMIT 500"
+
 				
 			
-			self.selcur.execute(selection_query + ext_scr)
+			self.selcur.execute(selection_query)
 			print "\tExecuted selection query."
 			
 			time.sleep(5)
@@ -259,64 +258,32 @@ def entity_min_max_update(row):
 		tdb.commit()
 
 		emmcurs.close()
+		print "Updated USER'S minmax! " + str(row[0]) 
 		
 	except Error as e:
 		print "user update for user: ", (row[0], row[1], row[2]), " failed."
 		print "Message: ", e
 		tdb.rollback()
 
-
-			
-
-def build_script(bot, upper):
+def build_script():
     # 'gaiqtren' = 'get_any_id_query_tweet_count_range_english'
-    first_part = "SELECT  twitter_id, smallest_pulled_tweet_id, " \
-                 "highest_pulled_tweet_id FROM twitter_entity " \
-                 "WHERE tweet_count >= " + str(bot)
-    second_part = " AND tweet_count < " + str(upper) + " AND twitter_id IS NOT NULL AND language = 'en'"
-    return first_part + second_part
+        first_part = "SELECT te.twitter_id, te.smallest_pulled_tweet_id, te.highest_pulled_tweet_id"
+        second_part = " From twitter_lol_resolution tlr JOIN twitter_entity te ON te.entity_id = tlr.twitter_entity_id "\
+					  " ORDER BY te.tweet_count DESC"
+        return first_part + second_part
+
 
 
 # just some stuff so I can do groups of tweeters in series...
 
-def range_status_update(top, range_status):
-	if(range_status > 250):
-		range_status -= 50
-	elif(range_status > 200):
-		range_status -= 25
-	elif(range_status > 150):
-		range_status -= 20
-	elif(range_status > 100):
-		range_status -= 10
-	else:
-		range_status = 5
-	return range_status
-
-
-range_status = 330
-top = 4000
-base = top - range_status
 tsf = TwitterStatusFinder('trackingfile.csv')
 
-version = 0 
+#execute the main loop
+print "Beginning main loop!"
+mt0 = time.clock() #track the time for the loop
+tsf.main_loop(build_script())
 
-while((base - range_status) > 50):
-	#parse the file!
-	
-	#sleep for about 15secs, try to let some resources free up for a bit...
-	time.sleep(8)
-	
-	#actually execute the main loop
-	print "Beginning main loop with base: ", base, " to range: ", top
-	mt0 = time.clock() #track the time for the main loop
-	tsf.main_loop(build_script(base, top))
-	
-	print "Took: ", time.clock() - mt0, " seconds to get all the tweets for base: ", base, " to: ", top
-	
-	top = base
-	base = top - range_status
-	range_status = range_status_update(top, range_status)
-
+print "Took: ", ((time.clock() - mt0) / 60), " minutes to get all the tweets!"
 
 tsf.close()
-print "Finished Loop for tweets! base = "
+print "Finished loop for tweets!"
