@@ -14,9 +14,8 @@ from mysql.connector import MySQLConnection, Error
 
 
 class TwitterStatusFinder:
-	def __init__(self, file, loud=False):
+	def __init__(self, loud=False):
 		
-		self.csvfile = file
 		self.loud = loud
 		self.t0 = time.clock()
 		
@@ -74,8 +73,10 @@ class TwitterStatusFinder:
 				else:
 					print "WHOA, half-baked ids up in here! Slow down bessy."
 					print "user_id: " + str(userId) + " min_id: " + str(min_id) + " max_id: " + str(max_id)
-					print "Exiting..."
-					sys.exit(1)
+					with (userId, min_id, max_id) as res:
+						thread.start_new_thread(entity_min_max_update, (res,))
+					
+					currentTweet = None
 				
 				if(currentTweet is not None):
 					#print "Received tweets!"
@@ -206,9 +207,10 @@ class TwitterStatusFinder:
 			
 			time.sleep(5)
 			startTime = time.clock()
+			loopTime = startTime
 			last_user = None
 			
-			for user in self.iter_users(self.selcur, 300):
+			for user in self.iter_users(self.selcur, 3000):
 				self.last_update = time.clock()
 				print "New user!"
 				if(last_user is not None):
@@ -226,11 +228,11 @@ class TwitterStatusFinder:
 				if(self.loud):
 					print "\tIt took: " + str(time.clock() - t0) + " to get a single user's tweets."
 				if((time.clock() - self.last_update) < 7.0):
-					print "too fast for new user, slowing down- waiting for: ", (8.0 - time.clock()-self.last_update)
+					print "too fast for new user, slowing down- waiting for: ", (8.0 - (time.clock()-self.last_update))
 					time.sleep(8.0 - (time.clock() - self.last_update))
 					self.last_update = time.clock()
 					
-				time.sleep(2.0)
+				time.sleep(2)
 			print "\n\tIt took: "+ str(time.clock() - startTime) + " to get all user's tweets."
 
 		except Error as e:
@@ -251,32 +253,35 @@ def entity_min_max_update(row):
 		upDTime = time.clock()
 		tdb = tools.db_connect()
 		emmcurs = tdb.cursor()
-		update_script = "UPDATE twitter_entity SET smallest_pulled_tweet_id = %s, " \
-				"highest_pulled_tweet_id = %s WHERE twitter_id = %s " \
-				" AND highest_pulled_tweet_id <= %s AND smallest_pulled_tweet_id >= %s"
-		emmcurs.execute(update_script, (row[1], row[2], row[0], row[1], row[2]))
+		
+		update_script = "UPDATE twitter_entity_resolved INNER JOIN (SELECT twitter_id, MIN(tweet_id) mintweet FROM tweets GROUP BY twitter_id) tb ON tb.twitter_id = twitter_entity_resolved.twitter_id SET twitter_entity_resolved.smallest_pulled_tweet_id = tb.mintweet WHERE twitter_entity_resolved.twitter_id = " + str(row[0]) + ";"
+		emmcurs.execute(update_script)
+		tdb.commit()
+		
+		update_script = "UPDATE twitter_entity_resolved INNER JOIN (SELECT twitter_id, MAX(tweet_id) maxtweet FROM tweets GROUP BY twitter_id) tb ON tb.twitter_id = twitter_entity_resolved.twitter_id SET twitter_entity_resolved.highest_pulled_tweet_id = tb.maxtweet WHERE twitter_entity_resolved.twitter_id = " + str(row[0]) + ";"
+		emmcurs.execute(update_script)
 		tdb.commit()
 
 		emmcurs.close()
-		print "Updated USER'S minmax! " + str(row[0]) 
+		print "Updated table's minmax! " + str(row[0]) 
 		
 	except Error as e:
-		print "user update for user: ", (row[0], row[1], row[2]), " failed."
+		print "user update failed."
 		print "Message: ", e
 		tdb.rollback()
 
 def build_script():
     # 'gaiqtren' = 'get_any_id_query_tweet_count_range_english'
         first_part = "SELECT te.twitter_id, te.smallest_pulled_tweet_id, te.highest_pulled_tweet_id"
-        second_part = " From twitter_lol_resolution tlr JOIN twitter_entity te ON te.entity_id = tlr.twitter_entity_id "\
-					  " ORDER BY te.tweet_count DESC"
+        second_part = " From twitter_lol_resolution tlr JOIN twitter_entity_resolved te ON te.entity_id = tlr.twitter_entity_id"\
+					  " WHERE te.smallest_pulled_tweet_id is NULL ORDER BY te.tweet_count ASC"
         return first_part + second_part
 
 
 
 # just some stuff so I can do groups of tweeters in series...
 
-tsf = TwitterStatusFinder('trackingfile.csv')
+tsf = TwitterStatusFinder()
 
 #execute the main loop
 print "Beginning main loop!"
