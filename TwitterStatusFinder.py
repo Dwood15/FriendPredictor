@@ -170,7 +170,7 @@ class TwitterStatusFinder:
 		img_count = 0
 		for media in tweet.entities.get('media', []):
 			if(media.get("type", None) == "photo"):
-				outFile = path + str(tweet_id) + str(img_count) + os.path.splitext(media["media_url"])[1]
+				outFile = path + str(tweet_id) + "_" + str(img_count) + os.path.splitext(media["media_url"])[1]
 				image_content=wget.download(media["media_url"], out = outFile)
 				img_count += 1
 				
