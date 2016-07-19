@@ -8,7 +8,8 @@ import sys
 import inspect
 import csv
 import thread
-
+import wget
+import os
 from mysql.connector import MySQLConnection, Error
 #import MySQLdb
 
@@ -56,6 +57,11 @@ class TwitterStatusFinder:
 		try:
 			if(user_Id is not None):
 				userId = user_Id[0]
+				
+				basePath = "Tweet_Pictures\\" + str(userId) + "\\"
+				if not os.path.exists(basePath):
+					os.mkdir(basePath)
+					
 				min_id = user_Id[1]
 				max_id = user_Id[2]
 				currentTweet = None
@@ -87,7 +93,7 @@ class TwitterStatusFinder:
 					
 					ctt0 = time.clock()
 					for tweet in currentTweet:
-						if(self.store_tweet(tweet, userId, test)):
+						if(self.store_tweet(tweet, userId, basePath, test)):
 							#only worry about max/min id if the storage worked!
 							if(tweet.id > max_id or max_id is None):
 								max_id = tweet.id
@@ -152,7 +158,7 @@ class TwitterStatusFinder:
 
 		return None
 		
-	def store_tweet(self, tweet, userId, test=False):
+	def store_tweet(self, tweet, userId, path, test=False):
 		tweet_id = tweet.id
 		text = tweet.text.encode('UTF-8', 'ignore')
 		date = str(tweet.created_at).encode('UTF-8', 'ignore')
@@ -160,6 +166,14 @@ class TwitterStatusFinder:
 		rt_count = tweet.retweet_count
 		reply_to_tweet = tweet.in_reply_to_status_id
 		reply_to_user = tweet.in_reply_to_user_id
+
+		img_count = 0
+		for media in tweet.entities.get('media', []):
+			if(media.get("type", None) == "photo"):
+				outFile = path + str(tweet_id) + str(img_count) + os.path.splitext(media["media_url"])[1]
+				image_content=wget.download(media["media_url"], out = outFile)
+				img_count += 1
+				
 		if(self.loud):
 			print "Storing tweets"
 		insert_script = "INSERT INTO tweets " \
@@ -254,11 +268,11 @@ def entity_min_max_update(row):
 		tdb = tools.db_connect()
 		emmcurs = tdb.cursor()
 		
-		update_script = "UPDATE twitter_entity_resolved INNER JOIN (SELECT twitter_id, MIN(tweet_id) mintweet FROM tweets GROUP BY twitter_id) tb ON tb.twitter_id = twitter_entity_resolved.twitter_id SET twitter_entity_resolved.smallest_pulled_tweet_id = tb.mintweet WHERE twitter_entity_resolved.twitter_id = " + str(row[0]) + ";"
+		update_script = "UPDATE twitter_entity INNER JOIN (SELECT twitter_id, MIN(tweet_id) mintweet FROM tweets GROUP BY twitter_id) tb ON tb.twitter_id = twitter_entity.twitter_id SET twitter_entity.smallest_pulled_tweet_id = tb.mintweet WHERE twitter_entity.twitter_id = " + str(row[0]) + ";"
 		emmcurs.execute(update_script)
 		tdb.commit()
 		
-		update_script = "UPDATE twitter_entity_resolved INNER JOIN (SELECT twitter_id, MAX(tweet_id) maxtweet FROM tweets GROUP BY twitter_id) tb ON tb.twitter_id = twitter_entity_resolved.twitter_id SET twitter_entity_resolved.highest_pulled_tweet_id = tb.maxtweet WHERE twitter_entity_resolved.twitter_id = " + str(row[0]) + ";"
+		update_script = "UPDATE twitter_entity INNER JOIN (SELECT twitter_id, MAX(tweet_id) maxtweet FROM tweets GROUP BY twitter_id) tb ON tb.twitter_id = twitter_entity.twitter_id SET twitter_entity.highest_pulled_tweet_id = tb.maxtweet WHERE twitter_entity.twitter_id = " + str(row[0]) + ";"
 		emmcurs.execute(update_script)
 		tdb.commit()
 
@@ -271,13 +285,11 @@ def entity_min_max_update(row):
 		tdb.rollback()
 
 def build_script():
-    # 'gaiqtren' = 'get_any_id_query_tweet_count_range_english'
         first_part = "SELECT te.twitter_id, te.smallest_pulled_tweet_id, te.highest_pulled_tweet_id"
-        second_part = " From twitter_lol_resolution tlr JOIN twitter_entity_resolved te ON te.entity_id = tlr.twitter_entity_id"\
-					  " WHERE te.smallest_pulled_tweet_id is NULL ORDER BY te.tweet_count ASC"
+        second_part = " From twitter_entity te "\
+					  " WHERE te.smallest_pulled_tweet_id is NULL "\
+					  " AND te.language LIKE \'%en%\' ORDER BY te.tweet_count ASC"
         return first_part + second_part
-
-
 
 # just some stuff so I can do groups of tweeters in series...
 
@@ -286,6 +298,10 @@ tsf = TwitterStatusFinder()
 #execute the main loop
 print "Beginning main loop!"
 mt0 = time.clock() #track the time for the loop
+
+ 
+if not os.path.exists("Tweet_Pictures\\"):
+	os.mkdir("Tweet_Pictures\\")
 tsf.main_loop(build_script())
 
 print "Took: ", ((time.clock() - mt0) / 60), " minutes to get all the tweets!"
