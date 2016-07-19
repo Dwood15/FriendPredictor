@@ -42,8 +42,12 @@ def db_connect():
         import MySQLdb as connection
         cnct = "msqldb"
 
-    db = connection.connect(host=file_json['piserver'], user=file_json['piuser'], passwd=file_json['pipwd'], db="lol", use_unicode=True,
-                            charset='utf8mb4', collation='utf8mb4_general_ci')
+
+    db = connection.connect(host=file_json['host'], user=file_json['uname'], db="lol")
+
+    # db = connection.connect(host=file_json['piserver'], user=file_json['piuser'], passwd=file_json['pipwd'], db="lol", use_unicode=True,
+    #                         charset='utf8mb4', collation='utf8mb4_general_ci')
+
     if (cnct == "msql"):
         return db
     else:
